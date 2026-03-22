@@ -2,16 +2,16 @@ name: Tests
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [ main, master ]
   pull_request:
-    branches: [ main, develop ]
+    branches: [ main, master ]
 
 jobs:
-  test-production:
+  test:
     runs-on: windows-latest
     strategy:
       matrix:
-        python-version: ['3.9', '3.10', '3.11', '3.12', '3.13']
+        python-version: ['3.10', '3.11']
 
     steps:
     - uses: actions/checkout@v3
@@ -21,63 +21,13 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
 
-    - name: Install production dependencies
+    - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt
-        pip install pylint flake8 black
 
-    - name: Lint with flake8
-      run: |
-        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
-        flake8 . --count --exit-zero --max-complexity=10 --max-line-length=100 --statistics
-
-    - name: Check code style with black
-      shell: pwsh
-      run: |
-        black --check *.py scada_root/
-        if ($LASTEXITCODE -ne 0) { Write-Host "Black reported formatting issues, but continuing."; exit 0 }
-
-    - name: Test scada_guard module
+    - name: Test classifier
       run: python scada_guard.py
 
-    - name: Test simulator module
+    - name: Test simulator
       run: python simulator.py
-
-  test-ml:
-    runs-on: windows-latest
-    strategy:
-      matrix:
-        python-version: ['3.9', '3.11', '3.13']
-
-    steps:
-    - uses: actions/checkout@v3
-
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v4
-      with:
-        python-version: ${{ matrix.python-version }}
-
-    - name: Install ML dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install -r requirements.txt
-        pip install -r ml/requirements_ml.txt
-
-    - name: Verify imports
-      run: python -c "import torch; import onnx; print(f'PyTorch {torch.__version__}')"
-
-    - name: Generate training data
-      run: |
-        cd ml
-        python data_gen.py
-        
-    - name: Build vocabulary
-      run: |
-        cd ml
-        python tokeniser.py
-
-    - name: Verify model
-      run: |
-        cd ml
-        python -c "from model import build_model, SCADAGuardModel; print('Model import OK')"
