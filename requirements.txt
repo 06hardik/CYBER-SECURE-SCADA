@@ -1,0 +1,13 @@
+# SCADA Guard - Production Requirements
+# ============================================
+
+# Core dependencies
+frida>=16.0.0          # Userspace instrumentation framework for syscall hooking
+rich>=13.0.0           # Rich CLI formatting and output
+onnxruntime>=1.18.0    # ONNX runtime for ML model inference
+
+# Optional: Build tools
+pyinstaller>=6.0.0     # Package Python apps as standalone executables
+
+# Optional: Development tools
+# pip install pylint flake8 black pytest pytest-cov

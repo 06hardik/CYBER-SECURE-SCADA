@@ -1,0 +1,17 @@
+# Safety Limits Reference
+# IEC 62443 Compliant | Rev 3.1
+
+[TEMPERATURE_LIMITS]
+turbine_max_celsius=620
+coolant_min_celsius=15
+ambient_alert_celsius=45
+
+[VOLTAGE_LIMITS]
+bus_voltage_high=415
+bus_voltage_low=380
+transient_tolerance_percent=10
+
+[EMERGENCY]
+estop_response_ms=250
+pressure_relief_psi=400
+auto_isolation=true

@@ -1,0 +1,103 @@
+[build-system]
+requires = ["setuptools>=65.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "scada-guard"
+version = "1.0.0"
+description = "Real-time SCADA file access anomaly detection using Frida + ONNX"
+readme = "README.md"
+requires-python = ">=3.9"
+license = {text = "MIT"}
+authors = [
+    {name = "Your Name", email = "your.email@example.com"}
+]
+keywords = [
+    "scada",
+    "security",
+    "anomaly-detection",
+    "behavioral-defense",
+    "frida",
+    "onnx",
+    "ml",
+    "threat-detection"
+]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Environment :: Win32 (MS Windows)",
+    "Intended Audience :: Developers",
+    "Intended Audience :: System Administrators",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: Microsoft :: Windows",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Security",
+    "Topic :: System :: Operating Systems",
+    "Topic :: System :: Monitoring",
+]
+dependencies = [
+    "frida>=16.0.0",
+    "rich>=13.0.0",
+    "onnxruntime>=1.18.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pyinstaller>=6.0.0",
+    "pytest>=7.0.0",
+    "pytest-cov>=4.0.0",
+    "pylint>=2.15.0",
+    "flake8>=4.0.0",
+    "black>=23.0.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/yourusername/scada-guard"
+Documentation = "https://github.com/yourusername/scada-guard#readme"
+Repository = "https://github.com/yourusername/scada-guard.git"
+"Bug Tracker" = "https://github.com/yourusername/scada-guard/issues"
+Changelog = "https://github.com/yourusername/scada-guard/blob/main/CHANGELOG.md"
+
+[tool.setuptools]
+packages = ["scada_guard"]
+
+[tool.black]
+line-length = 100
+target-version = ["py39", "py310", "py311", "py312", "py313"]
+include = '\.pyi?$'
+extend-exclude = '''
+/(
+  # directories
+  \.eggs
+  | \.git
+  | \.hg
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | build
+  | dist
+)/
+'''
+
+[tool.isort]
+profile = "black"
+line_length = 100
+skip_gitignore = true
+
+[tool.pylint.format]
+max-line-length = 100
+
+[tool.pylint.messages_control]
+disable = [
+    "C0103",  # invalid-name
+    "C0114",  # missing-module-docstring
+    "W0212",  # protected-access
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-v --cov=. --cov-report=term-missing"

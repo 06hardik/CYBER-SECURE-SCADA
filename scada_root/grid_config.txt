@@ -1,0 +1,17 @@
+# Grid Configuration - DO NOT MODIFY WITHOUT AUTHORIZATION
+# Plant ID: GRID-WEST-04
+
+[NETWORK]
+scada_master_ip=192.168.10.1
+plc_subnet=192.168.10.0/24
+hmi_ip=192.168.10.50
+
+[FAILSAFE]
+auto_shutdown_on_breach=true
+alert_control_room=true
+backup_power_enable=true
+
+[LIMITS]
+max_load_mw=450
+min_load_mw=50
+frequency_hz=50.0
