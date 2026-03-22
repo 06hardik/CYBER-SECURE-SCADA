@@ -33,7 +33,10 @@ jobs:
         flake8 . --count --exit-zero --max-complexity=10 --max-line-length=100 --statistics
 
     - name: Check code style with black
-      run: black --check *.py scada_root/ 2>/dev/null || true
+      shell: pwsh
+      run: |
+        black --check *.py scada_root/
+        if ($LASTEXITCODE -ne 0) { Write-Host "Black reported formatting issues, but continuing."; exit 0 }
 
     - name: Test scada_guard module
       run: python scada_guard.py
