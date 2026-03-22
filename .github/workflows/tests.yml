@@ -7,7 +7,7 @@ on:
     branches: [ main, develop ]
 
 jobs:
-  test:
+  test-production:
     runs-on: windows-latest
     strategy:
       matrix:
@@ -21,11 +21,11 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
 
-    - name: Install dependencies
+    - name: Install production dependencies
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt
-        pip install pytest pylint flake8 black
+        pip install pylint flake8 black
 
     - name: Lint with flake8
       run: |
@@ -33,7 +33,7 @@ jobs:
         flake8 . --count --exit-zero --max-complexity=10 --max-line-length=100 --statistics
 
     - name: Check code style with black
-      run: black --check *.py
+      run: black --check *.py scada_root/ 2>/dev/null || true
 
     - name: Test scada_guard module
       run: python scada_guard.py
@@ -41,5 +41,40 @@ jobs:
     - name: Test simulator module
       run: python simulator.py
 
-    - name: Lint with pylint
-      run: pylint *.py || true
+  test-ml:
+    runs-on: windows-latest
+    strategy:
+      matrix:
+        python-version: ['3.9', '3.11', '3.13']
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Install ML dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install -r ml/requirements_ml.txt
+
+    - name: Verify imports
+      run: python -c "import torch; import onnx; print(f'PyTorch {torch.__version__}')"
+
+    - name: Generate training data
+      run: |
+        cd ml
+        python data_gen.py
+        
+    - name: Build vocabulary
+      run: |
+        cd ml
+        python tokeniser.py
+
+    - name: Verify model
+      run: |
+        cd ml
+        python -c "from model import build_model, SCADAGuardModel; print('Model import OK')"

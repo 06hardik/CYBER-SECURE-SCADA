@@ -68,31 +68,28 @@ python simulator.py
 
 ```
 scada-guard/
-├── .github/
-│   ├── workflows/
-│   │   └── tests.yml              # CI/CD pipeline
-│   ├── ISSUE_TEMPLATE/
-│   │   ├── bug_report.md
-│   │   └── feature_request.md
-│   └── pull_request_template.md
-├── scada_root/                    # Test data directory
-│   └── *.txt, *.csv              # SCADA config files
-├── logs/                          # Generated at runtime
-│   └── events.log                # Event logs
-├── defender_core.py              # Main orchestrator
-├── hook.js                        # Frida hook script
-├── scada_guard.py                # ONNX classifier
-├── simulator.py                  # File access simulator
-├── requirements.txt              # Runtime dependencies
-├── pyproject.toml               # Package metadata & tool config
-├── .editorconfig                # Code style settings
-├── .gitignore                   # Git ignore rules
-├── README.md                    # User documentation
-├── CONTRIBUTING.md             # Contribution guidelines
-├── DEVELOPMENT.md              # This file
-├── SECURITY.md                 # Security policies
-├── CHANGELOG.md                # Release notes
-└── LICENSE                     # MIT License
+├── .github/                          # GitHub configuration
+├── ml/                               # Model Training Pipeline
+│   ├── model.py                      # Micro-transformer PyTorch model
+│   ├── train.py                      # Training loop + ONNX export
+│   ├── evaluate.py                   # Test set evaluation
+│   ├── dataset.py                    # PyTorch DataLoader
+│   ├── data_gen.py                   # Synthetic data generator
+│   ├── tokeniser.py                  # Path tokenizer
+│   ├── requirements_ml.txt           # ML-specific dependencies
+│   ├── checkpoints/                  # PyTorch model checkpoints
+│   ├── data/                         # Training/val/test datasets
+│   └── README.md                     # ML documentation
+├── scada_root/                      # Test SCADA config files
+├── defender_core.py                # Main orchestrator
+├── hook.js                         # Frida hook script
+├── scada_guard.py                  # ONNX classifier
+├── simulator.py                    # File access simulator
+├── requirements.txt                # Production dependencies
+├── pyproject.toml                  # Package metadata
+├── README.md                       # User guide
+├── DEVELOPMENT.md                  # This file
+└── ... (other docs)
 ```
 
 ## Code Style & Quality
@@ -132,19 +129,90 @@ Add to `.vscode/settings.json`:
 #### PyCharm
 Settings → Editor → Code Style → Python → Scheme → Set to "Black"
 
-## Testing
+## Model Training
 
-### Unit Tests
+SCADA Guard includes a **custom micro-transformer** model for classification. The training pipeline is fully self-contained in the `ml/` folder.
+
+### Training Architecture
+
+- **Model:** Micro-Transformer (2 layers, 4 heads, 128-dim, ~120K params)
+- **Input:** File paths (tokenized) + 7 numeric syscall features
+- **Output:** Binary classification (BENIGN/MALICIOUS)
+- **Training:** PyTorch with OneCycleLR scheduler
+- **Export:** ONNX for <2ms inference
+
+### Step-by-Step Training
 
 ```bash
-# Run all tests
-pytest tests/ -v
+cd ml
+cd build
 
-# Run with coverage
-pytest tests/ --cov=. --cov-report=html
+# Step 1: Generate synthetic SCADA syscall data
+python data_gen.py
+# Output: data/train.jsonl (10K), data/val.jsonl (2K), data/test.jsonl (2K)
 
-# Run specific test file
-pytest tests/test_classifier.py -v
+# Step 2: Build vocabulary from tokenized paths
+python tokeniser.py
+# Output: vocab.json (~2K tokens)
+
+# Step 3: Train and export to ONNX
+python train.py
+# Output: checkpoints/best_model.pt, ../scada_guard.onnx
+# Runs for 30 epochs with early stopping (patience=5)
+# Training log: train_log.json
+
+# Step 4: Evaluate on test set
+python evaluate.py
+# Prints: Confusion matrix, F1/Precision/Recall, latency benchmark
+```
+
+### Customizing Training
+
+Edit `ml/train.py` to adjust hyperparameters:
+
+```python
+EPOCHS       = 30        # Total epochs
+BATCH_SIZE   = 64        # Training batch size
+LR           = 3e-4      # Learning rate
+WEIGHT_DECAY = 1e-3      # L2 regularization
+PATIENCE     = 5         # Early stopping patience
+```
+
+Edit `ml/model.py` to adjust architecture:
+
+```python
+D_MODEL   = 128    # Embedding dimension
+N_HEADS   = 4      # Transformer heads
+N_LAYERS  = 2      # Transformer encoder layers
+D_FF      = 256    # Feedforward hidden size
+DROPOUT   = 0.1    # Dropout rate
+```
+
+### Using Custom Training Data
+
+Replace `ml/data/` with your own JSONL datasets:
+
+```json
+{"hook": "WriteFile", "path": "C:\\SCADA_ROOT\\config.txt", "bytes": 2048, "is_write": true, "label": 1}
+{"hook": "CreateFileA", "path": "C:\\Temp\\log.txt", "bytes": 0, "is_write": false, "label": 0}
+```
+
+Then re-run the training pipeline.
+
+### Model Evaluation
+
+```bash
+cd ml
+python evaluate.py
+
+# Output example:
+# Confusion Matrix:
+#   True Neg:  1850  False Pos:  150
+#   False Neg:   25  True Pos:  1975
+#
+# Metrics:
+#   Precision: 0.9295, Recall: 0.9879, F1: 0.9579
+#   Latency (ONNX): 1.23ms per inference
 ```
 
 ### Integration Tests

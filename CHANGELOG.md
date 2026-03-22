@@ -26,18 +26,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Initial SCADA Guard release
 - Frida-based behavioral hooking for syscall interception
-- ONNX-based ML inference for file access classification
+- **Custom micro-transformer model** for file access classification (~120K params, <2ms inference)
+- **ML training pipeline** with PyTorch
+  - Synthetic data generator (10K+ samples)
+  - Path tokenizer with learned vocabulary
+  - Transformer architecture (2 layers, 4 heads)
+  - ONNX export for production inference
+  - Comprehensive evaluation metrics
 - Real-time logging to `logs/events.log`
 - Support for CreateFileW, CreateFileA, NtCreateFile, WriteFile, NtWriteFile hooks
 - Confidence scoring for predictions
 - Non-destructive simulator for testing
-- Comprehensive documentation and examples
+- Comprehensive documentation (README, DEVELOPMENT, ML/README guides)
 
 ### Dependencies
+**Production:**
 - frida>=16.0.0
-- pyinstaller>=6.0.0
 - rich>=13.0.0
-- onnxruntime (auto-installed)
+- onnxruntime>=1.18.0
+- pyinstaller>=6.0.0 (optional)
+
+**Model Training (Optional):**
+- torch>=2.2.0
+- onnx>=1.16.0
+- numpy>=1.26.0
 
 ---
 

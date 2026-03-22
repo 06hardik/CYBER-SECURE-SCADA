@@ -16,6 +16,8 @@ Be respectful, inclusive, and professional in all interactions.
 
 ### Development Setup
 
+**for Core Development:**
+
 ```bash
 # Clone your fork
 git clone https://github.com/yourusername/scada-guard.git
@@ -23,13 +25,27 @@ cd scada-guard
 
 # Create a virtual environment
 python -m venv .venv
-.venv\Scripts\activate
+.venv\\Scripts\\activate
 
 # Install dependencies
 pip install -r requirements.txt
 
 # Optional: Install dev tools
 pip install pylint flake8 black pytest
+```
+
+**for ML/Model Development:**
+
+```bash
+# After core setup, also install ML dependencies
+pip install -r ml/requirements_ml.txt
+
+# Or use pyproject.toml shorthand
+pip install ".[ml]"
+
+# Verify ML setup
+cd ml
+python -c "import torch; print(f'PyTorch {torch.__version__}')"
 ```
 
 ## Workflow
@@ -45,16 +61,33 @@ pip install pylint flake8 black pytest
    - Follow the coding style (see below)
 
 3. **Test thoroughly:**
-   ```bash
-   # Run unit tests
-   pytest tests/
 
+   **Production code:**
+   ```bash
    # Run linting
    flake8 .
    pylint *.py
 
-   # Test integration
-   python defender_core.py
+   # Test production modules
+   python scada_guard.py
+   python simulator.py
+   ```
+
+   **ML/Model code (if modified):**
+   ```bash
+   cd ml
+   
+   # Generate test data
+   python data_gen.py
+   python tokeniser.py
+   
+   # Verify model import
+   python -c "from model import build_model; print('OK')"
+   ```
+
+   **Integration test:**
+   ```bash
+   python defender_core.py  # (requires Frida + admin)
    ```
 
 4. **Commit with clear messages:**
@@ -110,12 +143,19 @@ def classify(hook: str, path: str, bytes_count: int, is_write: bool) -> str:
 
 ## Areas for Contribution
 
-### High Priority
-- [ ] Improve model accuracy (add training data)
+### High Priority - ML/Model
+- [ ] Improve model accuracy (add real SCADA training data)
+- [ ] Add adversarial examples to training data
+- [ ] Implement quantization for smaller models
+- [ ] Multi-task learning (add severity classification)
+- [ ] Active learning pipeline for continuous improvement
+
+### High Priority - Frida/Hooking
 - [ ] Optimize inference latency
-- [ ] Add more syscall hooks (NtReadFile, etc.)
+- [ ] Add more syscall hooks (NtReadFile, NtSetInformationFile, etc.)
+- [ ] Implement hook chaining for complex patterns
+- [ ] Add Windows Event Tracing (ETW) integration
 - [ ] Build Windows Service wrapper
-- [ ] Add KQL integration for Azure Sentinel
 
 ### Medium Priority
 - [ ] Add Linux support
@@ -135,13 +175,15 @@ def classify(hook: str, path: str, bytes_count: int, is_write: bool) -> str:
 Before submitting a PR, ensure:
 
 - [ ] Code follows style guide (PEP 8, black)
-- [ ] Tests pass locally (`pytest`, `flake8`, `pylint`)
+- [ ] Tests pass locally (`flake8`, `pylint`)
 - [ ] Changes don't break existing functionality
-- [ ] New dependencies are documented in `requirements.txt`
+- [ ] New dependencies are documented in `requirements.txt` or `ml/requirements_ml.txt`
 - [ ] Docstrings and comments are clear
-- [ ] Commit messages are descriptive
+- [ ] Commit messages are descriptive (Conventional Commits format)
 - [ ] No sensitive data committed (API keys, paths, etc.)
 - [ ] `.gitignore` is updated if needed
+- [ ] If ML changes: Model checkpoint exports correctly to ONNX
+- [ ] If ML changes: Test data generation runs without errors
 
 ## Reporting Issues
 

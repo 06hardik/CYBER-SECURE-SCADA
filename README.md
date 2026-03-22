@@ -87,19 +87,36 @@ Logs are written to `logs/events.log`.
 
 ```
 scada-guard/
-├── defender_core.py        # Frida orchestrator (main entry point)
-├── hook.js                  # Frida hook script for syscall interception
-├── scada_guard.py          # ONNX inference module (drop-in for llm_guard.py)
-├── simulator.py            # Safe file access simulator (benign + malicious)
-├── scada_guard.onnx        # Trained ONNX model (binary, <2ms inference)
-├── scada_guard.onnx.data   # Model metadata
-├── requirements.txt        # Python dependencies
-├── scada_root/             # Mock SCADA system configs (test data)
+├── ml/                                  # Model Training Pipeline
+│   ├── model.py                        # Micro-transformer architecture
+│   ├── train.py                        # Training loop + ONNX export
+│   ├── evaluate.py                     # Model evaluation & benchmarking
+│   ├── dataset.py                      # DataLoader for training
+│   ├── data_gen.py                     # Synthetic data generator
+│   ├── tokeniser.py                    # Path tokenizer & vocab builder
+│   ├── requirements_ml.txt             # ML dependencies (PyTorch, ONNX)
+│   ├── vocab.json                      # Learned vocabulary (auto-generated)
+│   ├── checkpoints/                    # Model checkpoints
+│   │   └── best_model.pt              # Best PyTorch model
+│   ├── data/                           # Training data
+│   │   ├── train.jsonl
+│   │   ├── val.jsonl
+│   │   └── test.jsonl
+│   └── README.md                       # ML pipeline docs
+├── defender_core.py                    # Frida orchestrator (main entry point)
+├── hook.js                             # Frida hook script for syscall interception
+├── scada_guard.py                      # ONNX inference module
+├── simulator.py                        # Safe file access simulator
+├── scada_guard.onnx                    # Trained ONNX model (< 2ms inference)
+├── scada_guard.onnx.data               # Model metadata
+├── requirements.txt                    # Production dependencies
+├── scada_root/                         # Mock SCADA system configs (test data)
 │   ├── grid_config.txt
 │   ├── pressure_thresholds.txt
 │   ├── safety_limits.txt
-│   └── turbine_auth.csv
-└── README.md              # This file
+│   ├── turbine_auth.csv
+│   └── README.md
+└── README.md                           # This file
 ```
 
 ## Configuration
@@ -191,8 +208,12 @@ Each line in `logs/events.log` is a JSON event:
 | ONNX Inference | <2ms (CPU) |
 | Tokenization | <1ms |
 | Total per-event latency | <3ms (incl. I/O logging) |
+| Model Parameters | ~120K |
+| Training Time | ~2–3 minutes (30 epochs, 64 batch) |
 | False Positive Rate | 2–5% (tunable) |
 | False Negative Rate | 1–3% (fail-safe) |
+| PyTorch Model Size | ~480 KB |
+| ONNX Model Size | ~400 KB |
 
 ## Troubleshooting
 
@@ -245,16 +266,70 @@ Description                 Expected    Got         Conf    OK
   ...
 ```
 
-## Model Training
+## Model Training & Development
 
-The ONNX model (`scada_guard.onnx`) was pre-trained offline. To retrain:
+SCADA Guard uses a **custom micro-transformer** trained with PyTorch and exported to ONNX for fast inference.
+
+### Architecture
+
+- **Micro-Transformer:** 2 layers, 4 heads, 128-dim embeddings (~120K params)
+- **Tokenization:** File path → subword tokens + 7 numeric features
+- **Inference:** <2ms CPU latency
+- **Framework:** PyTorch → ONNX Runtime
+
+### Training Pipeline
 
 ```bash
 cd ml
-python data_gen.py        # Generate synthetic training data
-python tokeniser.py       # Build vocabulary
-python train.py           # Train and export to ONNX
+
+# 1. Install ML dependencies
+pip install -r requirements_ml.txt
+
+# 2. Generate synthetic training data
+python data_gen.py        # Creates data/train.jsonl, val.jsonl, test.jsonl
+
+# 3. Build vocabulary from paths
+python tokeniser.py       # Creates vocab.json
+
+# 4. Train model and export to ONNX
+python train.py           # Trains for 30 epochs, saves to ../scada_guard.onnx
+
+# 5. Evaluate on test set
+python evaluate.py        # Prints metrics and latency benchmark
 ```
+
+### Output
+
+```
+ml/
+├── checkpoints/
+│   └── best_model.pt          # PyTorch checkpoint
+├── data/
+│   ├── train.jsonl            # ~10K training samples
+│   ├── val.jsonl              # ~2K validation samples
+│   └── test.jsonl             # ~2K test samples
+├── vocab.json                 # Learned vocabulary
+└── train_log.json             # Training metrics per epoch
+
+scada_guard.onnx              # Final ONNX model (production)
+```
+
+### Model Customization
+
+Edit `ml/model.py` to adjust:
+- `D_MODEL = 128` — Embedding dimension
+- `N_HEADS = 4` — Transformer heads
+- `N_LAYERS = 2` — Transformer layers
+- `D_FF = 256` — Feedforward size
+- `DROPOUT = 0.1` — Regularization
+
+Edit `ml/train.py` for training hyperparameters:
+- `EPOCHS = 30`
+- `BATCH_SIZE = 64`
+- `LR = 3e-4`
+- `PATIENCE = 5` (early stopping)
+
+See [ml/README.md](ml/README.md) for detailed ML documentation.
 
 ## Security Considerations
 
@@ -265,11 +340,26 @@ python train.py           # Train and export to ONNX
 
 ## Dependencies
 
+### Production (Inference Only)
+
 See `requirements.txt`:
 - `frida>=16.0.0` — Userspace instrumentation framework
-- `pyinstaller>=6.0.0` — Optional: build standalone executable
 - `rich>=13.0.0` — CLI formatting
-- `onnxruntime` — ONNX model inference (auto-installed)
+- `onnxruntime>=1.18.0` — ONNX model inference
+- `pyinstaller>=6.0.0` — Optional: build standalone executable
+
+### Model Training (Development)
+
+See `ml/requirements_ml.txt`:
+- `torch>=2.2.0` — Deep learning framework
+- `onnx>=1.16.0` — ONNX format support
+- `onnxruntime>=1.18.0` — ONNX inference validation
+- `numpy>=1.26.0` — Numerical computing
+
+**Note:** Install ML dependencies only when retraining the model:
+```bash
+pip install -r ml/requirements_ml.txt
+```
 
 ## Building a Standalone Executable
 

@@ -1,5 +1,11 @@
 # SCADA Guard - Production Requirements
-# ============================================
+# =======================================
+#
+# FOR MODEL TRAINING, also install:
+#   pip install -r ml/requirements_ml.txt
+#
+# The main ONNX model (scada_guard.onnx) is pre-trained and included.
+# You only need the ML dependencies if retraining the model.
 
 # Core dependencies
 frida>=16.0.0          # Userspace instrumentation framework for syscall hooking

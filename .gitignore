@@ -49,6 +49,16 @@ coverage.xml
 .hypothesis/
 .pytest_cache/
 
+# ML pipeline (keep data & checkpoints for version control)
+ml/__pycache__/
+ml/*.pyc
+ml/.pytest_cache/
+
+# PyTorch
+*.pt
+*.pth
+checkpoint_*
+
 # Translations
 *.mo
 *.pot
