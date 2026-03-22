@@ -1,105 +1,219 @@
-# SCADA Guard
+# SCADA Guard: Sovereign Digital Immune System 🛡️
 
-Real-time SCADA file access monitoring using Frida + ML model.
+**World’s first smart offline cybersecurity software.**
 
-## Setup
+Built for the **India Innovates Hackathon**, SCADA Guard is a real-time, fully offline Operational Technology (OT) defense system. It uses dynamic instrumentation (Frida) and a Sovereign Small Language Model (SLM) to protect critical government infrastructure from zero-day malware and rogue insider attacks without relying on cloud APIs.
+
+## 🏗️ Core Architecture
+
+This system operates on a **Neuro-Symbolic, Zero-Trust Bridge** model, divided into three defensive tiers:
+
+1. **The Sensory Layer (Synchronous API Hooking):** Instead of asynchronous monitoring, the agent acts as an OS-level toll booth using Frida. It intercepts critical system calls (e.g., `WriteFile`, `CreateRemoteThread`) and physically pauses untrusted threads before execution.
+2. **The Cognitive Layer (Sovereign SLM):** A 100% indigenous Micro-Transformer (~120K parameters) trained from scratch on SCADA telemetry and system calls. It analyzes behavioral intent in `<2ms` entirely on local CPU. 
+3. **The Action Layer (Graceful Degradation):** The LLM never executes commands directly. A deterministic Python engine parses the AI's verdict and terminates malicious threads or drops compromised users into restricted VLANs.
+
+---
+
+## ⚙️ Setup & Installation
 
 ```bash
 pip install -r requirements.txt
 python defender_core.py
-```
-
-Check `logs/events.log` for results.
 
 ## Quick Test
 
-```bash
-python scada_guard.py      # Test classifier
-python simulator.py        # Test file access simulation
-```
+python scada_guard.py      # Test the local SLM classifier
+python simulator.py        # Test file access and syscall simulation
 
+## 📂 Project Structure
 
-## Project Structure
-
-```
 .
-├── defender_core.py    # Main orchestrator
-├── hook.js            # Frida hook script
-├── scada_guard.py     # ONNX classifier
-├── simulator.py       # Test simulator
-├── ml/                # Training code
+├── defender_core.py    # Main orchestrator (The Action Layer)
+├── hook.js             # Frida hook script (The Sensory Layer)
+├── scada_guard.py      # ONNX classifier (The Cognitive Layer)
+├── simulator.py        # Test simulator
+├── ml/                 # Neural Network Training Code
 │   ├── train.py
 │   ├── evaluate.py
 │   ├── model.py
 │   ├── dataset.py
 │   ├── data_gen.py
 │   └── tokeniser.py
-└── scada_root/        # Test configs
-```
+└── scada_root/         # Simulated SCADA environment configs
 
-## Config
+## 🛠️ Configuration
 
-Edit the core files directly:
+1. Edit the core files directly to modify system parameters:
 
-- **simulator.py**: `SCADA_ROOT` path
-- **defender_core.py**: `DEFAULT_PYTHON`, `LOG_DIR`
-- **hook.js**: `shouldSkip()` function for filtering
+2. simulator.py: SCADA_ROOT path
 
-## API
+3. defender_core.py: DEFAULT_PYTHON, LOG_DIR
 
-```python
+4. hook.js: Modify the shouldSkip() function for Tier-1 process whitelisting/filtering.
+
+## 🔌 API Usage
+
 from scada_guard import classify_with_confidence
 
-verdict, conf = classify_with_confidence("WriteFile", r"C:\file.txt", 1024, True)
+# Evaluates the behavioral intent of a system call sequence
+verdict, conf = classify_with_confidence("WriteFile", r"C:\scada_database.txt", 1024, True)
+
 # Returns: ("MALICIOUS", 0.95)
-```
 
-## Retrain the Model
+## 🧠 Retrain the Sovereign Model
+If you want to train the Micro-Transformer from scratch on your own machine:
 
-```bash
 pip install -r ml/requirements_ml.txt
 cd ml
 
-python data_gen.py       # Generate training data
-python tokeniser.py      # Build vocabulary
-python train.py          # Train & export ONNX
-python evaluate.py       # Test it
-```
+python data_gen.py       # Generate synthetic SCADA training data
+python tokeniser.py      # Build indigenous vocabulary
+python train.py          # Train & export to ONNX format
+python evaluate.py       # Test accuracy
 
-Model saves to `../scada_guard.onnx`.
 
-## Model Info
+Note: The newly trained model saves to ../scada_guard.onnx.
 
-- Micro-transformer (2 layers, 4 heads, ~120K params)
-- Input: Tokenized file paths + 7 features
-- Output: BENIGN or MALICIOUS
-- Speed: <2ms/event on CPU
+Model Specifications
+Architecture: Custom Micro-transformer (2 layers, 4 heads, ~120K params)
 
-## Dependencies
+Input: Tokenized file paths + 7 behavioral features
 
-**Production:**
-```
+Output: BENIGN or MALICIOUS
+
+Speed: <2ms/event on standard CPU (No GPU required for inference)
+
+📦 Dependencies
+Production Engine:
+
 frida>=16.0.0
-rich>=13.0.0
+
+rich>=13.0.0 (For high-fidelity terminal UI)
+
 onnxruntime>=1.18.0
-```
 
-**Training:**
-```
+Training Engine:
+
 torch>=2.2.0
-onnx>=1.16.0
-numpy>=1.26.0
-```
 
-## Build Exe
+onnx>=1.16.0
+
+numpy>=1.26.0
+
+
+
+Gemini said
+Here is the complete, merged README.md file. It combines the high-level, winning architectural pitch for the judges with the exact technical setup instructions and configurations from your repository.
+
+You can copy this entire block directly into your repository.
+
+Markdown
+# SCADA Guard: Sovereign Digital Immune System 🛡️
+
+**World’s first smart offline cybersecurity software.**
+
+Built for the **India Innovates Hackathon**, SCADA Guard is a real-time, fully offline Operational Technology (OT) defense system. It uses dynamic instrumentation (Frida) and a Sovereign Small Language Model (SLM) to protect critical government infrastructure from zero-day malware and rogue insider attacks without relying on cloud APIs.
+
+## 🏗️ Core Architecture
+
+This system operates on a **Neuro-Symbolic, Zero-Trust Bridge** model, divided into three defensive tiers:
+
+1. **The Sensory Layer (Synchronous API Hooking):** Instead of asynchronous monitoring, the agent acts as an OS-level toll booth using Frida. It intercepts critical system calls (e.g., `WriteFile`, `CreateRemoteThread`) and physically pauses untrusted threads before execution.
+2. **The Cognitive Layer (Sovereign SLM):** A 100% indigenous Micro-Transformer (~120K parameters) trained from scratch on SCADA telemetry and system calls. It analyzes behavioral intent in `<2ms` entirely on local CPU. 
+3. **The Action Layer (Graceful Degradation):** The LLM never executes commands directly. A deterministic Python engine parses the AI's verdict and terminates malicious threads or drops compromised users into restricted VLANs.
+
+---
+
+## ⚙️ Setup & Installation
 
 ```bash
+pip install -r requirements.txt
+python defender_core.py
+Check logs/events.log for real-time interception results.
+
+🧪 Quick Test
+Bash
+python scada_guard.py      # Test the local SLM classifier
+python simulator.py        # Test file access and syscall simulation
+📂 Project Structure
+Plaintext
+.
+├── defender_core.py    # Main orchestrator (The Action Layer)
+├── hook.js             # Frida hook script (The Sensory Layer)
+├── scada_guard.py      # ONNX classifier (The Cognitive Layer)
+├── simulator.py        # Test simulator
+├── ml/                 # Neural Network Training Code
+│   ├── train.py
+│   ├── evaluate.py
+│   ├── model.py
+│   ├── dataset.py
+│   ├── data_gen.py
+│   └── tokeniser.py
+└── scada_root/         # Simulated SCADA environment configs
+🛠️ Configuration
+Edit the core files directly to modify system parameters:
+
+simulator.py: SCADA_ROOT path
+
+defender_core.py: DEFAULT_PYTHON, LOG_DIR
+
+hook.js: Modify the shouldSkip() function for Tier-1 process whitelisting/filtering.
+
+🔌 API Usage
+Python
+from scada_guard import classify_with_confidence
+
+# Evaluates the behavioral intent of a system call sequence
+verdict, conf = classify_with_confidence("WriteFile", r"C:\scada_database.txt", 1024, True)
+
+# Returns: ("MALICIOUS", 0.95)
+🧠 Retrain the Sovereign Model
+If you want to train the Micro-Transformer from scratch on your own machine:
+
+Bash
+pip install -r ml/requirements_ml.txt
+cd ml
+
+python data_gen.py       # Generate synthetic SCADA training data
+python tokeniser.py      # Build indigenous vocabulary
+python train.py          # Train & export to ONNX format
+python evaluate.py       # Test accuracy
+Note: The newly trained model saves to ../scada_guard.onnx.
+
+Model Specifications
+Architecture: Custom Micro-transformer (2 layers, 4 heads, ~120K params)
+
+Input: Tokenized file paths + 7 behavioral features
+
+Output: BENIGN or MALICIOUS
+
+Speed: <2ms/event on standard CPU (No GPU required for inference)
+
+📦 Dependencies
+Production Engine:
+
+frida>=16.0.0
+
+rich>=13.0.0 (For high-fidelity terminal UI)
+
+onnxruntime>=1.18.0
+
+Training Engine:
+
+torch>=2.2.0
+
+onnx>=1.16.0
+
+numpy>=1.26.0
+
+## 🔨 Build Executable
+
+To compile the entire defense system into a portable, standalone executable for deployment on air-gapped SCADA systems:
+
 pip install pyinstaller
 pyinstaller --onefile defender_core.py
-```
 
-Output: `dist/defender_core.exe`
+Output will be located at: dist/defender_core.exe
 
-## License
-
+## 📄 License
 MIT
