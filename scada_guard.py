@@ -196,7 +196,7 @@ if __name__ == "__main__":
     print(f"\n{'Description':30s}  {'Expected':10}  {'Got':10}  {'Conf':>6}  {'OK':>4}")
     for hook, path, byt, wr, expected in cases:
         verdict, conf = classify_with_confidence(hook, path, byt, wr)
-        ok = "✓" if verdict == expected else "✗"
+        ok = "PASS" if verdict == expected else "FAIL"
         desc = f"{'WRITE' if wr else 'READ':5s}  {os.path.basename(path)}"
         print(f"  {desc:28s}  {expected:10}  {verdict:10}  {conf:6.3f}  {ok}")
     print()
