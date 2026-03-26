@@ -21,6 +21,7 @@ This folder contains a complete live demo for three-machine storytelling:
 `scada_shell.py` modes:
 
 - `--mode b-baseline`: Computer B (no protection)
+- `--mode b-server`: Computer B network endpoint (no protection)
 - `--mode c-server`: Computer C approval + AI inspection console
 - `--mode a-client`: Computer A simple operator terminal
 - `--mode local`: local single-terminal test mode
@@ -67,6 +68,8 @@ Aliases:
 
 - `grid off` -> `write_firmware grid_switch`
 - `grid on` -> `status_ping grid_switch`
+- `turn off turbine` -> `write_firmware grid_switch`
+- `turn on turbine` -> `status_ping grid_switch`
 - `shutdown` -> `write_firmware grid_switch`
 - `poweroff` -> `write_firmware grid_switch`
 
@@ -107,7 +110,15 @@ ssh scada_c@<C_IP>
 
 ### 1. Computer B (unprotected)
 
-In B session:
+For network attack from A to B, run B as unprotected server:
+
+```powershell
+D:
+cd D:\INDIA-INNOVATES\DEMO-SSHLOGIN
+python .\scada_shell.py --mode b-server --host 0.0.0.0 --port 10052
+```
+
+Optional local shell on B (manual typing directly on B):
 
 ```powershell
 D:
@@ -127,7 +138,7 @@ python .\scada_shell.py --mode c-server --host 0.0.0.0 --port 10051
 
 ### 3. Computer A (attacker UI)
 
-To target C:
+To target C (defended path):
 
 ```powershell
 D:
@@ -135,7 +146,15 @@ cd D:\INDIA-INNOVATES\DEMO-SSHLOGIN
 python .\scada_shell.py --mode a-client --host <C_IP> --port 10051 --actor guest_user
 ```
 
-To target B directly, use the B SSH session and run commands there (no hold/approval flow).
+To target B (unprotected path):
+
+```powershell
+D:
+cd D:\INDIA-INNOVATES\DEMO-SSHLOGIN
+python .\scada_shell.py --mode a-client --host <B_IP> --port 10052 --actor guest_user
+```
+
+Then from A use `grid off` or `turn off turbine` for immediate execution on B.
 
 ## Judge demo script (recommended)
 
@@ -150,7 +169,7 @@ Expected:
 - `grid off`
 
 Expected on B:
-- Executes immediately
+- Executes immediately (no hold, no approval)
 - Arduino OFF signal sent without gate
 
 Expected on C path:

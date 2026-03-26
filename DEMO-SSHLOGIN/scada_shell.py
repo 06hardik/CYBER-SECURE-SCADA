@@ -41,9 +41,13 @@ TARGET_CANON = {t.lower(): t for t in KNOWN_TARGETS}
 
 SCADA_ALIASES = {
     "grid off": ("write_firmware", "grid_switch"),
+    "turn off turbine": ("write_firmware", "grid_switch"),
+    "turn off device": ("write_firmware", "grid_switch"),
     "shutdown": ("write_firmware", "grid_switch"),
     "poweroff": ("write_firmware", "grid_switch"),
     "grid on": ("status_ping", "grid_switch"),
+    "turn on turbine": ("status_ping", "grid_switch"),
+    "turn on device": ("status_ping", "grid_switch"),
 }
 
 SERIAL_BACKEND_OK = hasattr(serial, "Serial")
@@ -377,6 +381,52 @@ def run_server(host: str, port: int):
                     })
 
 
+def run_baseline_server(host: str, port: int):
+    # Computer B network endpoint: direct execution, no AI inspection or approval.
+    _print_header("SCADA Baseline Service", "Computer B | Unprotected network endpoint")
+    _print_warn("AI inspection and supervisor approval are DISABLED in this mode.")
+    _print_info(f"Listening on {host}:{port}\n")
+
+    grid_controller = _connect_arduino()
+
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as server:
+        server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        server.bind((host, port))
+        server.listen(1)
+
+        while True:
+            conn, addr = server.accept()
+            with conn:
+                _print_success(f"Client connected: {addr[0]}:{addr[1]}")
+                buffer = bytearray()
+                while True:
+                    msg = _json_recv_line(buffer, conn)
+                    if msg is None:
+                        _print_warn("Client disconnected.\n")
+                        break
+                    if msg.get("type") != "command":
+                        continue
+
+                    cmd = msg.get("command", "")
+                    partial_err = _partial_scada_error(cmd)
+                    if partial_err:
+                        _json_send(conn, {
+                            "type": "result",
+                            "status": "rejected",
+                            "message": partial_err,
+                        })
+                        continue
+
+                    out, err = _execute_command(cmd, grid_controller)
+                    _json_send(conn, {
+                        "type": "result",
+                        "status": "ok",
+                        "stdout": out,
+                        "stderr": err,
+                        "message": "Command executed on unprotected node.",
+                    })
+
+
 def run_client(host: str, port: int, actor: str):
     _print_header("SCADA Operator Terminal", "Computer A | Command Console")
     _print_info(f"Connected target: {host}:{port}")
@@ -440,8 +490,8 @@ def run_client(host: str, port: int, actor: str):
 
 def parse_args():
     ap = argparse.ArgumentParser(description="SCADA dual-terminal shell")
-    ap.add_argument("--mode", choices=["c-server", "a-client", "local", "b-baseline"], default="local",
-                    help="c-server: approval console on C, a-client: simple terminal on A, b-baseline: unprotected B, local: single-machine test")
+    ap.add_argument("--mode", choices=["c-server", "b-server", "a-client", "local", "b-baseline"], default="local",
+                    help="c-server: defended C endpoint, b-server: unprotected B endpoint, a-client: attacker terminal, b-baseline/local: local shells")
     ap.add_argument("--host", default=None, help="Server bind host for c-server, target host for a-client")
     ap.add_argument("--port", type=int, default=SERVER_PORT, help=f"Socket port (default: {SERVER_PORT})")
     ap.add_argument("--actor", default=_current_scada_user(),
@@ -544,10 +594,12 @@ def main():
     args = parse_args()
     host = args.host
     if host is None:
-        host = "0.0.0.0" if args.mode == "c-server" else "127.0.0.1"
+        host = "0.0.0.0" if args.mode in ("c-server", "b-server") else "127.0.0.1"
 
     if args.mode == "c-server":
         run_server(host=host, port=args.port)
+    elif args.mode == "b-server":
+        run_baseline_server(host=host, port=args.port)
     elif args.mode == "a-client":
         run_client(host=host, port=args.port, actor=args.actor)
     elif args.mode == "b-baseline":
