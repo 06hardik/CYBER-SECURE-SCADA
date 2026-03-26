@@ -1,6 +1,0 @@
-operator_id,name,clearance_level,turbine_access,last_login
-OPS001,John Hargrove,L3,T1|T2|T3,2024-01-15 08:32
-OPS002,Priya Nair,L2,T1|T2,2024-01-15 09:10
-OPS003,Marcus Webb,L1,T1,2024-01-14 17:45
-ADMIN01,Sarah Chen,L4,ALL,2024-01-15 07:00
-MAINT01,Dave Okafor,L2,T2|T3,2024-01-13 11:20

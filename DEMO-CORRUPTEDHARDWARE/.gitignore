@@ -1,0 +1,41 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.Python
+build/
+dist/
+
+# Virtual environments
+.venv/
+venv/
+ENV/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Generated
+logs/
+*.log
+.coverage
+.pytest_cache/
+
+# PyInstaller
+*.exe
+*.msi
+
+# ML
+ml/__pycache__/
+*.pt
+*.pth
+
+# Local
+.temp/
+.tmp/

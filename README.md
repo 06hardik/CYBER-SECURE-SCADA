@@ -20,6 +20,54 @@ This system operates on a **Neuro-Symbolic, Zero-Trust Bridge** model, divided i
 pip install -r requirements.txt
 python defender_core.py
 
+## Network-Triggered Update (March 2026)
+
+The input source was extended from local-only execution to optional network delivery, while keeping the Frida interception and ML decision pipeline unchanged.
+
+### What changed
+
+- Added `receive_payload()` in `defender_core.py`
+	- Listens on TCP `0.0.0.0:9999`
+	- Receives raw file bytes
+	- Saves payload as `dropped_payload.py`
+	- Returns the saved path for execution
+- Updated `Defender.__init__` to accept optional `script_path`
+	- If `--script` is provided: runs provided script path (existing behavior)
+	- If `--script` is omitted: waits for network payload, then runs `dropped_payload.py`
+- Added `launcher.py`
+	- Minimal sender that transmits a local file to the defender listener
+
+### What stayed unchanged
+
+- Frida spawn/attach/resume flow
+- `hook.js` injection and message transport
+- `_on_message()` event handling
+- `scada_guard.classify(hook, path, bytes, is_write)` call
+- Kill/resume enforcement logic
+- Logging behavior
+
+### How to run (two terminals / two machines)
+
+Defender side (Computer C):
+
+```bash
+python defender_core.py
+```
+
+Attacker side (Computer A):
+
+```bash
+python launcher.py --file payload.py --host <DEFENDER_IP> --port 9999
+```
+
+On receipt, defender writes `dropped_payload.py` and executes it through the existing pipeline.
+
+### Optional local mode (unchanged)
+
+```bash
+python defender_core.py --script simulator.py
+```
+
 ## Quick Test
 
 python scada_guard.py      # Test the local SLM classifier
