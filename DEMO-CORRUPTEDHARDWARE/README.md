@@ -37,21 +37,53 @@ The input source was extended from local-only execution to optional network deli
 - Kill/resume enforcement logic
 - Logging behavior
 
-### How to run (two terminals / two machines)
+### 3-machine demo architecture (Ethernet LAN)
 
-Defender side (Computer C):
+- Computer A (Attacker): `192.168.10.1`
+- Computer B (Unprotected): `192.168.10.2`
+- Computer C (Protected): `192.168.10.3`
+
+All hosts listen on TCP `9999` for payload delivery.
+
+### Run order
+
+Computer B (unprotected receiver):
+
+```bash
+python unprotected_receiver.py
+```
+
+Computer C (protected receiver + defender pipeline):
 
 ```bash
 python defender_core.py
 ```
 
-Attacker side (Computer A):
+Computer A (send same payload to both B and C):
 
 ```bash
-python launcher.py --file payload.py --host <DEFENDER_IP> --port 9999
+python launcher.py --file demo_payload.py
 ```
 
-On receipt, defender writes `dropped_payload.py` and executes it through the existing pipeline.
+Default launcher targets are `192.168.10.2,192.168.10.3`.
+
+### Network behavior by host
+
+- B receives `dropped_payload.py` and executes it directly via `python dropped_payload.py`.
+- C receives `dropped_payload.py`, then runs it through existing Frida interception and ML classification flow.
+- Same payload, different outcome: B is unprotected, C can block malicious behavior.
+
+### Included demo scripts
+
+- `launcher.py` — attacker sender for one or many IP targets
+- `unprotected_receiver.py` — B-side listener + direct execution
+- `run_unprotected_b.ps1` — one-command startup for B
+- `demo_payload.py` — safe simulation payload (SCADA write simulation + exfil simulation)
+
+### Repository hygiene
+
+- Generated payload/build artifacts are ignored (`dropped_payload.py`, `simulator/`, `*.toc`, `*.pkg`, `*.pyz`, logs/cache).
+- Demo GitHub Actions test workflow has been removed.
 
 ### Optional local mode (unchanged)
 

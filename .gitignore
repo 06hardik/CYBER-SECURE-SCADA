@@ -22,6 +22,14 @@ dist/
 *.log
 logs/
 
+# Demo-generated runtime files
+dropped_payload.py
+attack_simulation_marker.txt
+simulator/
+*.pyz
+*.toc
+*.pkg
+
 # OS/editor files
 .DS_Store
 Thumbs.db
