@@ -1,41 +1,28 @@
-# Python
+# Python bytecode and caches
 __pycache__/
 *.py[cod]
-*.egg-info/
-.Python
-build/
-dist/
+*$py.class
 
 # Virtual environments
 .venv/
 venv/
-ENV/
+env/
 
-# IDE
-.vscode/
-.idea/
-*.swp
-*.swo
+# Packaging / build artifacts
+build/
+dist/
+*.egg-info/
 
-# OS
+# Test and tool caches
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Logs and local runtime output
+*.log
+logs/
+
+# OS/editor files
 .DS_Store
 Thumbs.db
-
-# Generated
-logs/
-*.log
-.coverage
-.pytest_cache/
-
-# PyInstaller
-*.exe
-*.msi
-
-# ML
-ml/__pycache__/
-*.pt
-*.pth
-
-# Local
-.temp/
-.tmp/
+.vscode/settings.json
