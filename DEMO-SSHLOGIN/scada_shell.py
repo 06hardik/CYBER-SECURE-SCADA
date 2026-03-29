@@ -24,7 +24,7 @@ except ImportError:
     console = None
 
 # --- CONFIGURATION ---
-ARDUINO_PORT = "COM8"
+ARDUINO_PORT = "COM6"
 BAUD_RATE = 9600
 SECONDARY_PIN = "9988"
 SERVER_PORT = 10051
